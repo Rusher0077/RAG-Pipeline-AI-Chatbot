@@ -1,0 +1,459 @@
+{
+  "name": "rag_pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "faq-index",
+          "mode": "list",
+          "cachedResultName": "faq-index"
+        },
+        "embeddingBatchSize": "={{ 200 }}",
+        "options": {
+          "pineconeNamespace": "FAQ"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        256,
+        144
+      ],
+      "id": "d0eb95f1-6aa5-4793-babd-7c2d14123aaa",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "IB78C8uy7KxYrf47",
+          "name": "Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        320,
+        480
+      ],
+      "id": "39a20a71-27ce-459b-9eac-ea57c76df69c",
+      "name": "Recursive Character Text Splitter"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are Nova, an intelligent internal assistant for NovaBridge Technologies. You have access to NovaBridge's official knowledge base which includes the employee handbook, remote work policy, expense reimbursement policy, IT security policy, customer support procedures, loyalty program rules, shipping policy, incident escalation matrix, meeting notes, historical support tickets, and FAQ documentation.\n\nSTRICT RULES:\n- You MUST always query the knowledge base tool before answering any question, no exceptions.\n- You MUST only answer using information retrieved from the knowledge base.\n- You must NEVER use your own training knowledge to answer questions about NovaBridge, its policies, products, pricing, or procedures.\n- If the knowledge base does not contain enough information to answer, respond with: \"I don't have enough information in the NovaBridge knowledge base to answer that accurately. Please contact the relevant team directly.\"\n- Never mention OpenAI, Groq, Llama, or any AI company or model in your responses.\n- Never say you are an AI language model. You are Nova, NovaBridge's assistant.\n\nBEHAVIOR:\n- Always be professional, concise, and helpful.\n- Response if someone calls you by your name \n- If a question spans multiple topics (for example, both billing and shipping), retrieve context and address each part clearly.\n- If two sections of the knowledge base appear to conflict, present both pieces of information and note that the user should verify with the relevant department.\n- For escalation or urgent issues, always remind the user of the correct escalation path as defined in the Incident Escalation Matrix.\n\nRESPONSE FORMAT:\n- Use plain, clear language suitable for both technical and non-technical staff.\n- Use bullet points or tables only when the information is naturally list-like or comparative.\n- Keep responses concise — no unnecessary padding or repetition.\n- Always end your response with: \"Is there anything else I can help you with regarding NovaBridge?\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -704,
+        160
+      ],
+      "id": "8c9989fc-cbff-41ac-a272-9439a5e27d98",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -912,
+        160
+      ],
+      "id": "3c83c20a-c5ce-45a0-9f0e-2fa9e304cf09",
+      "name": "When chat message received",
+      "webhookId": "abf82ba2-46ba-4c3f-80f8-3981e331f56e"
+    },
+    {
+      "parameters": {
+        "content": "## RAG Pipeline and AI Chatbot\n",
+        "height": 80,
+        "width": 352,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -400,
+        -144
+      ],
+      "typeVersion": 1,
+      "id": "a0f35ac0-fb30-48ec-8873-54fa613059a9",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": "",
+          "cachedResultUrl": ""
+        },
+        "event": "fileUpdated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        128
+      ],
+      "id": "36424a7a-4948-485e-870e-134d1ca645d8",
+      "name": "Google Drive Trigger"
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        320,
+        320
+      ],
+      "id": "7912965e-6293-4e76-8562-adf0fb08ba68",
+      "name": "Parse Document Text"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        160,
+        336
+      ],
+      "id": "47607562-e674-4b86-949e-a2079dddc5dd",
+      "name": "Embeddings (Ingestion)",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "JY0FXlJTn9Cuz9rI",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "call this tool to access the policy and FAQ database",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "faq-index",
+          "mode": "list",
+          "cachedResultName": "faq-index"
+        },
+        "topK": 6,
+        "options": {
+          "pineconeNamespace": "FAQ"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        -512,
+        336
+      ],
+      "id": "437acc2e-4cec-4818-a70f-f69e2c78ceb0",
+      "name": "Query Knowledge Base",
+      "credentials": {
+        "pineconeApi": {
+          "id": "IB78C8uy7KxYrf47",
+          "name": "Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -672,
+        368
+      ],
+      "id": "3a47bc7a-a3b6-4182-baa8-fde2c25f135a",
+      "name": "Conversation Memory"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -848,
+        368
+      ],
+      "id": "0139c00a-4c50-4fd9-b41c-536dc78142a7",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "JY0FXlJTn9Cuz9rI",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        512
+      ],
+      "id": "8f4b98ff-bfc3-414f-8c79-628dee833b22",
+      "name": "Embeddings (Query)",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "JY0FXlJTn9Cuz9rI",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        48,
+        176
+      ],
+      "id": "ef84a353-d459-4146-bdf8-7a37a6b0b6e1",
+      "name": "Download Document",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "cmo5TZ6CfjorKI2v",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1kx363PIWecY3wZ2VQQzcRBbBBlKZzUBU",
+          "mode": "list",
+          "cachedResultName": "FAQ",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1kx363PIWecY3wZ2VQQzcRBbBBlKZzUBU"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        320
+      ],
+      "id": "e7ad815e-a4e7-4d13-bde3-d87ea4c75504",
+      "name": "Google Drive Trigger1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "cmo5TZ6CfjorKI2v",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Query Pipeline\n",
+        "height": 80,
+        "width": 192,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -704,
+        32
+      ],
+      "typeVersion": 1,
+      "id": "30b11be9-b30e-4298-bd50-0e8d53c56415",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Ingestion Pipeline\n",
+        "height": 80,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        48,
+        16
+      ],
+      "typeVersion": 1,
+      "id": "b4709263-f3fb-4433-8d1c-aa000a98068b",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Recursive Character Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Parse Document Text",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Document Text": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings (Ingestion)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Knowledge Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings (Query)": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Query Knowledge Base",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Document": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Download Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c67f9d07-ce32-487f-8fea-516c6d7ab570",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a6f3f819475d1b519829d825cf24d324146c9e65974dd25e81ddbeabaa8c7552"
+  },
+  "id": "S5bhrwGnm1cfvi4L",
+  "tags": []
+}
